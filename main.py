@@ -123,10 +123,7 @@ class YadziGame:
         self.history_text = tk.Text(self.window, height=10, width=40, bd=0,bg="lightblue")
         self.history_text.grid(row=6, column=9, columnspan=5, padx=10, pady=10)
 
-        self.vertical_scrollbar = tk.Scrollbar(self.window, command=self.history_text.yview)
-        self.vertical_scrollbar.grid(row=6, column=10,columnspan=20 , sticky="ns")
-        
-        self.history_text.config(yscrollcommand=self.vertical_scrollbar.set)
+
         self.dice_buttons = [tk.Button(self.window, image="", bd=0,bg="lightblue") for _ in range(5)]
         for i, dice_button in enumerate(self.dice_buttons):
                 dice_button.grid(row=1+i, column=1)
@@ -185,21 +182,21 @@ class YadziGame:
             else:
                 dice_buttons[i].config(image=self.cube_undefined , state="disabled",bg="lightblue")
 
-        self.window.after(50, self.animation_swap, clock - 1, dice_buttons, dice_v, dice_numer)
+        self.window.after(5, self.animation_swap, clock - 1, dice_buttons, dice_v, dice_numer)
         
         
     def spin(self):
         self.flag = 0
         for i in range(5):
             self.dice_buttons[i].config(image="" )
-        self.animation_swap(20, self.dice_buttons, self.cube_player, self.cube_player_value)
+        self.animation_swap(40, self.dice_buttons, self.cube_player, self.cube_player_value)
         self.spin_pc()
     
     
     def spin_pc(self):
         for i in range(5):
             self.pc_cube_buttons[i].config(image="")
-        self.animation_swap(20, self.pc_cube_buttons, self.pc_cube, self.pc_cube_value)
+        self.animation_swap(40, self.pc_cube_buttons, self.pc_cube, self.pc_cube_value)
         
     def show_result(self):
         for i in range(5):
@@ -231,11 +228,11 @@ class YadziGame:
         self.pas += 1
         if self.pas % 2:
             if self.player_score > self.pc_score:
-                self.history.append(f"{self.player_score}\t|\t{self.pc_score} Win")
+                self.history.append(f"U:{self.player_score} \ PC:{self.pc_score} Win")
             elif self.player_score == self.pc_score:
-                self.history.append(f"{self.player_score}\t|\t{self.pc_score} Draw")
+                self.history.append(f"U:{self.player_score} \ PC:{self.pc_score} Draw")
             else:
-                self.history.append(f"{self.player_score}\t|\t{self.pc_score} Loss")
+                self.history.append(f"U:{self.player_score} \ PC:{self.pc_score} Loss")
             
             self.history_text.delete("1.0", "end")
             for line in self.history:
