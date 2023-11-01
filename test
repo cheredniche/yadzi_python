@@ -1,0 +1,379 @@
+import tkinter as tk
+from PIL import Image, ImageTk
+import random
+from collections import Counter
+from tkinter import font
+
+class yadzi:
+    def __init__(self):
+        self.window = tk.Tk()
+        self.window.geometry("600x500")
+        self.window.title("Яцзи")
+        #self.window.iconbitmap("images/dice.ico")
+
+        self.dice_images = [ImageTk.PhotoImage(Image.open(f"images\dice{i}.png").resize((64, 64))) for i in range(1, 7)]
+        self.dice_nan = ImageTk.PhotoImage(Image.open(f"images/dice_nan.png").resize((64, 64)))
+
+        self.player_dice = [None] * 5
+        self.ai_dice = [None] * 5
+        self.ai_score = 0
+        self.player_score = 0
+        self.pas = 0
+        self.k = 0
+        self.history = []
+
+        font1 = tk.font.Font(family="Comic Sans MS", size=12, weight="normal", slant="italic")
+
+        self.player_result_label = tk.Label(self.window, text="", font=font1)
+        self.player_result_label.grid(row=1, column=6, columnspan=5)
+
+        self.ai_result_label = tk.Label(self.window, text="", font=font1)
+        self.ai_result_label.grid(row=3, column=6, columnspan=5)
+
+        self.submut_score = tk.Label(self.window, text="", font=font1)
+        self.submut_score.grid(row=2, column=6, columnspan=5)
+
+        history_text = tk.Text(self.window, height=10, width=40, bd=0, bg="#f0f0f0")
+        history_text.grid(row=5, column=0, columnspan=5, padx=10, pady=10)
+
+        vertical_scrollbar = tk.Scrollbar(self.window, command=history_text.yview)
+        vertical_scrollbar.grid(row=5, column=5, sticky="ns")
+        history_text.config(yscrollcommand=vertical_scrollbar.set)
+        roll_button = tk.Button(self.window, text="Кинути кубiки", bd=3, command=self.roll_dice, relief="flat", font=font1)
+        roll_button.grid(row=0, column=0, columnspan=5)
+
+        self.dice_buttons = [tk.Button(self.window, image="", bd=0) for _ in range(5)]
+        for i, dice_button in enumerate(self.dice_buttons):
+            dice_button.grid(row=1, column=i)
+
+        ai_dice_buttons = [tk.Button(self.window, image="", bd=0) for _ in range(5)]
+        for i, ai_dice_button in enumerate(ai_dice_buttons):
+            ai_dice_button.grid(row=3, column=i)
+
+        player_dice_label = tk.Label(self.window, text="Кубики гравця:", font=font1)
+        player_dice_label.grid(row=6, column=0, columnspan=3, padx=10, pady=5)
+
+        self.player_dice_value = tk.Label(self.window, text="", font=font1)
+        self.player_dice_value.grid(row=6, column=3, columnspan=2, padx=10, pady=5)
+
+        ai_dice_label = tk.Label(self.window, text="Кубики комп`ютера:", font=font1)
+        ai_dice_label.grid(row=7, column=0, columnspan=3, padx=10, pady=5)
+
+        self.ai_dice_value = tk.Label(self.window, text="", font=font1)
+        self.ai_dice_value.grid(row=7, column=3, columnspan=2, padx=10, pady=5)
+
+        new_game_button = tk.Button(self.window, text="Нова гра", command=self.new_game, font=font1, relief="flat")
+        new_game_button.grid(row=4, column=6, columnspan=5)
+
+    def update_dice_v(self, dice_v, label):
+        global k
+        colors = ["green", "red", "pink", "blue"]
+        if k < 40:
+            dice_values = [random.choice('↸ᒷᒷ⨅ リ⚍ℸ ̣ ᓭ') for _ in range(6)]
+            dice_text = " ".join(map(str, dice_values))
+            label.config(text=dice_text, fg=random.choice(colors))
+        else:
+            dice_text = ", ".join(map(str, dice_v))
+            label.config(text=dice_text, fg="black")
+        k += 1
+
+    def new_game(self):
+        self.ai_score = 0
+        self.player_score = 0
+        self.pas = 0
+        self.k = 0
+        self.player_dice.clear()
+        self.ai_dice.clear()
+        for i in range(5):
+            self.player_dice.append(None)
+            self.ai_dice.append(None)
+            #self.dice_buttons[i].config(image=self.dice_nan, command=self.roll_dice)
+            #self.ai_dice_buttons[i].config(image=self.dice_nan, command=self.roll_dice)
+
+        self.player_result_label.config(text="")
+        self.ai_result_label.config(text="")
+        self.submut_score.config(text="")
+        # history_text.delete("1.0", "end")
+        self.history.clear()
+        self.player_dice_value.config(text="")
+        self.ai_dice_value.config(text="")
+
+    def roll_dice_animation(self, clock, dice_buttons, dice_v, dice_numer):
+        if clock == 0:
+            self.show_result()
+            self.update_dice_v(dice_v, dice_numer)
+            return
+
+        dice_i = random.randint(0, 4)
+        dice_v[dice_i] = random.randint(1, 6)
+
+        for i in range(5):
+            if dice_v[i] is not None:
+                dice_buttons[i].config(image=self.dice_images[dice_v[i] - 1], state="disabled")
+            else:
+                dice_buttons[i].config(image=self.dice_nan, state="disabled")
+
+        self.update_dice_v(dice_v, dice_numer)
+        self.window.after(50, self.roll_dice_animation, clock - 1, dice_buttons, dice_v, dice_numer)
+
+    def roll_dice(self):
+        global k
+        k = 0
+        for i in range(5):
+            self.dice_buttons[i].config(image="")
+        self.roll_dice_animation(20, self.dice_buttons, self.player_dice, self.player_dice_value)
+        self.roll_ai_dice()
+
+    def roll_ai_dice(self):
+        for i in range(5):
+            self.dice_buttons[i].config(image="")
+        self.roll_dice_animation(20, self.dice_buttons, self.ai_dice, self.ai_dice_value)
+
+    def show_result(self):
+        for i in range(5):
+            self.dice_buttons[i].config(state="active")
+            # ai_dice_buttons[i].config(state="active")
+        global pas, ai_score, player_score
+        counts = [self.player_dice.count(i) for i in range(1, 7)]
+
+        if 2 in counts:
+            player_score = 5
+
+        elif 3 in counts:
+            player_score = 10
+        elif 4 in counts:
+            player_score = 20
+        elif 5 in counts:
+            player_score = 50
+
+        counts = [self.ai_dice.count(i) for i in range(1, 7)]
+
+        if 2 in counts:
+            ai_score = 5
+
+        elif 3 in counts:
+            ai_score = 10
+        elif 4 in counts:
+            ai_score = 20
+        elif 5 in counts:
+            ai_score = 50
+        pas += 1
+        if pas % 2:
+            if player_score > ai_score:
+                self.history.append(f"{self.player_score}\t|\t{self.ai_score} ✅")
+            else:
+                self.history.append(f"{self.player_score}\t|\t{self.ai_score} ❎")
+
+            # history_text.delete("1.0", "end")
+            for line in self.history:
+                # history_text.insert("end", line + "\n")
+                pass
+        else:
+            pass
+        self.player_result_label.config(text=f"Ваш результат: {self.player_score} балiв")
+        self.ai_result_label.config(text=f"Результат ШI: {self.ai_score} балiв")
+        if self.player_score > self.ai_score:
+            self.submut_score.config(text=f"Ви перемогли!")
+        elif self.player_score < self.ai_score:
+            self.submut_score.config(text=f"Ви програли(")
+        elif self.player_score == self.ai_score:
+            self.submut_score.config(text=f"Нiчия o_0")
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    game = yadzi()
+    game.new_game()
+    root.mainloop()
+
+
+"""
+import tkinter as tk
+from PIL import Image, ImageTk
+import random
+from collections import Counter
+from tkinter import font
+
+
+class yadzi:
+    def __init__(self):
+        self.window = tk.Tk()
+        self.window.geometry("600x500")
+        self.window.title("Яцзи")
+        self.window.iconbitmap("images/dice.ico")
+
+        self.dice_images = [ImageTk.PhotoImage(Image.open(f"images/dice{i}.png").resize((64, 64))) for i in range(1, 7)]
+        self.dice_nan = ImageTk.PhotoImage(Image.open("images/dice_nan.png").resize((64, 64)))
+
+        self.player_dice = [None] * 5
+        self.ai_dice = [None] * 5
+        self.ai_score = 0
+        self.player_score = 0
+        self.pas = 0
+        self.k = 0
+        self.history = []
+
+
+        font1 = tk.font.Font(family="Comic Sans MS", size=12, weight="normal", slant="italic")
+
+        player_result_label = tk.Label(self.window, text="", font=font1)
+        player_result_label.grid(row=1, column=6, columnspan=5)
+
+        ai_result_label = tk.Label(self.window, text="", font=font1)
+        ai_result_label.grid(row=3, column=6, columnspan=5)
+
+        submut_score = tk.Label(self.window, text="", font=font1)
+        submut_score.grid(row=2, column=6, columnspan=5)
+
+        history_text = tk.Text(self.window, height=10, width=40, bd=0, bg="#f0f0f0")
+        history_text.grid(row=5, column=0, columnspan=5, padx=10, pady=10)
+
+        vertical_scrollbar = tk.Scrollbar(self.window, command=history_text.yview)
+        vertical_scrollbar.grid(row=5, column=5, sticky="ns")
+        history_text.config(yscrollcommand=vertical_scrollbar.set)
+        roll_button = tk.Button(self.window, text="Кинути кубiки", bd=3, command=roll_dice, relief="flat" , font=font1)
+        roll_button.grid(row=0, column=0, columnspan=5)
+
+        dice_buttons = [tk.Button(self.window, image="", bd=0) for _ in range(5)]
+        for i, dice_button in enumerate(dice_buttons):
+            dice_button.grid(row=1, column=i)
+
+        ai_dice_buttons = [tk.Button(self.window, image="", bd=0) for _ in range(5)]
+        for i, ai_dice_button in enumerate(ai_dice_buttons):
+            ai_dice_button.grid(row=3, column=i)
+
+        player_dice_label = tk.Label(self.window, text="Кубики гравця:" , font=font1)
+        player_dice_label.grid(row=6, column=0, columnspan=3, padx=10, pady=5)
+
+        player_dice_value = tk.Label(self.window, text="", font=font1)
+        player_dice_value.grid(row=6, column=3, columnspan=2, padx=10, pady=5)
+
+        ai_dice_label = tk.Label(self.window, text="Кубики комп`ютера:" , font=font1)
+        ai_dice_label.grid(row=7, column=0, columnspan=3, padx=10, pady=5)
+
+        ai_dice_value = tk.Label(self.window, text="", font=font1)
+        ai_dice_value.grid(row=7, column=3, columnspan=2, padx=10, pady=5)
+
+        new_game_button = tk.Button(self.window, text="Нова гра", command=self.new_game, font=font1, relief="flat")
+        new_game_button.grid(row=4, column=6, columnspan=5)
+
+    def update_dice_v(self, dice_v, label):
+        global k
+        colors = ["green","red","pink","blue"]
+        if k < 40:
+            dice_values = [random.choice('↸ᒷᒷ⨅ リ⚍ℸ ̣ ᓭ') for _ in range(6)]
+            dice_text = " ".join(map(str, dice_values))
+            label.config(text=dice_text , fg=random.choice(colors))
+        else:
+            dice_text = ", ".join(map(str, dice_v))
+            label.config(text=dice_text , fg="black")
+        k += 1
+
+    def new_game(self):
+        global ai_score, player_score, pas,k
+        ai_score = 0
+        player_score = 0
+        pas = 0
+        k = 0
+        self.player_dice.clear()
+        self.ai_dice.clear()
+        for i in range(5):
+            self.player_dice.append(None)
+            self.ai_dice.append(None)
+            self.dice_buttons[i].config(image=self.dice_nan , command = self.roll_dice)
+            self.ai_dice_buttons[i].config(image=self.dice_nan, command = self.roll_dice)
+
+        self.player_result_label.config(text="")
+        self.ai_result_label.config(text="")
+        self.submut_score.config(text="")
+        self.history_text.delete("1.0", "end")
+        self.history.clear()
+        self.player_dice_value.config(text="")
+        self.ai_dice_value.config(text="")
+
+    def roll_dice_animation(self, clock, dice_buttons, dice_v, dice_numer):
+        if clock == 0:
+            self.show_result()
+            self.update_dice_v(dice_v, dice_numer)
+            return
+
+        dice_i = random.randint(0, 4)
+        dice_v[dice_i] = random.randint(1, 6)
+
+        for i in range(5):
+            if dice_v[i] is not None:
+                dice_buttons[i].config(image=self.dice_images[dice_v[i] - 1] , state="disabled")
+            else:
+                dice_buttons[i].config(image=self.dice_nan , state="disabled")
+
+        self.update_dice_v(dice_v, dice_numer)
+        self.window.after(50, self.roll_dice_animation, clock - 1, dice_buttons, dice_v, dice_numer)
+
+    def roll_dice(self):
+        global k
+        k = 0
+        for i in range(5):
+            self.dice_buttons[i].config(image="" )
+        self.roll_dice_animation(20, self.dice_buttons, self.player_dice, self.player_dice_value)
+        self.roll_ai_dice()
+
+    def roll_ai_dice(self):
+        for i in range(5):
+            self.ai_dice_buttons[i].config(image="")
+        self.roll_dice_animation(20, self.ai_dice_buttons, self.ai_dice, self.ai_dice_value)
+
+    def show_result(self):
+        for i in range(5):
+            self.dice_buttons[i].config(state="active")
+            self.ai_dice_buttons[i].config(state="active")
+        global pas, ai_score, player_score
+        counts = [self.player_dice.count(i) for i in range(1, 7)]
+
+        if 2 in counts:
+            player_score = 5
+
+        elif 3 in counts:
+            player_score = 10
+        elif 4 in counts:
+            player_score = 20
+        elif 5 in counts:
+            player_score = 50
+
+        counts = [self.ai_dice.count(i) for i in range(1, 7)]
+
+        if 2 in counts:
+            ai_score = 5
+
+        elif 3 in counts:
+            ai_score = 10
+        elif 4 in counts:
+            ai_score = 20
+        elif 5 in counts:
+            ai_score = 50
+        pas += 1
+        if pas % 2:
+            if player_score > ai_score:
+                self.history.append(f"{self.player_score}\t|\t{self.ai_score} ✅")
+            else:
+                self.history.append(f"{self.player_score}\t|\t{self.ai_score} ❎")
+        
+            self.history_text.delete("1.0", "end")
+            for line in self.history:
+                self.history_text.insert("end", line + "\n")
+        else:
+            pass
+        self.player_result_label.config(text=f"Ваш результат: {self.player_score} балiв" )
+        self.ai_result_label.config(text=f"Результат ШI: {self.ai_score} балiв")
+        if self.player_score > self.ai_score:
+            self.submut_score.config(text=f"Ви перемогли!")
+        elif self.player_score < self.ai_score:
+            self.submut_score.config(text=f"Ви програли(")
+        elif self.player_score == self.ai_score:
+            self.submut_score.config(text=f"Нiчия o_0")
+
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    game = yadzi(root)
+    game.new_game()
+    root.mainloop()
+"""
